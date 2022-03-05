@@ -97,21 +97,27 @@ func realMain() int {
 	}()
 
 	logger := log.New(os.Stdout, "", 0)
-	if c.Db < 0 { // <0 is for all dbs, easier to manage than a *uint unfortunately
-		if err = redisdump.DumpServer(c.Host, c.Port, url.QueryEscape(redisPassword), tlshandler, c.Filter, c.NWorkers, c.WithTTL, c.BatchSize, c.Noscan, logger, serializer, progressNotifs); err != nil {
-			fmt.Fprintf(os.Stderr, "%s", err)
-			return 1
-		}
+
+	var db = new(uint8)
+	// If the user passed a db as parameter, we only dump that db
+	if c.Db >= 0 {
+		*db = uint8(c.Db)
 	} else {
-		var db *uint8 = nil
-		if c.Db != -1 {
-			*db = uint8(c.Db)
-		}
-		if err = redisdump.DumpDB(c.Host, c.Port, url.QueryEscape(redisPassword), tlshandler, db, c.Filter, c.NWorkers, c.WithTTL, c.BatchSize, c.Noscan, logger, serializer, progressNotifs); err != nil {
-			fmt.Fprintf(os.Stderr, "%s", err)
-			return 1
-		}
+		db = redisdump.AllDBs
 	}
+
+	s := redisdump.Host{
+		Host:       c.Host,
+		Port:       c.Port,
+		Password:   url.QueryEscape(redisPassword),
+		TlsHandler: tlshandler,
+	}
+
+	if err = redisdump.DumpServer(s, db, c.Filter, c.NWorkers, c.WithTTL, c.BatchSize, c.Noscan, logger, serializer, progressNotifs); err != nil {
+		fmt.Fprintf(os.Stderr, "%s", err)
+		return 1
+	}
+
 	return 0
 }
 
