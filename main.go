@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/url"
 	"os"
 	"sync"
 
@@ -57,7 +56,11 @@ func realMain() int {
 
 	var tlshandler *redisdump.TlsHandler = nil
 	if c.Tls == true {
-		tlshandler = redisdump.NewTlsHandler(c.CaCert, c.Cert, c.Key)
+		tlshandler, err = redisdump.NewTlsHandler(c.CaCert, c.Cert, c.Key, c.Insecure)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			return 1
+		}
 	}
 
 	var serializer func([]string) string
@@ -109,7 +112,8 @@ func realMain() int {
 	s := redisdump.Host{
 		Host:       c.Host,
 		Port:       c.Port,
-		Password:   url.QueryEscape(redisPassword),
+		Username:   c.Username,
+		Password:   redisPassword,
 		TlsHandler: tlshandler,
 	}
 
