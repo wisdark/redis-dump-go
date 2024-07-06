@@ -127,7 +127,7 @@ func RedisCmdSerializer(cmd []string) string {
 	buf := strings.Builder{}
 	buf.WriteString(fmt.Sprintf("%s", cmd[0]))
 	for i := 1; i < len(cmd); i++ {
-		if strings.Contains(cmd[i], " ") {
+		if strings.Contains(cmd[i], " ") || len(cmd[i]) == 0 {
 			buf.WriteString(fmt.Sprintf(" \"%s\"", cmd[i]))
 		} else {
 			buf.WriteString(fmt.Sprintf(" %s", cmd[i]))
@@ -254,9 +254,6 @@ func parseKeyspaceInfo(keyspaceInfo string) ([]uint8, error) {
 		dbIndex, err := strconv.ParseUint(dbIndexString, 10, 8)
 		if err != nil {
 			return nil, err
-		}
-		if dbIndex > 16 {
-			return nil, fmt.Errorf("Error parsing INFO keyspace")
 		}
 
 		dbs = append(dbs, uint8(dbIndex))
